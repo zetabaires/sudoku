@@ -66,7 +66,7 @@ function nearFinish(remaining) {
   for (const i of editable.slice(0, remaining)) g.board[i] = 0;
   return g;
 }
-test('autocomplete is offered only with 1–10 remaining cells and correct entries', () => {
+test('autocomplete is offered only with 1–10 remaining cells and correct entries', async () => {
   assert.equal(S.canAutocomplete(S.createGame()), false);
   assert.equal(S.canAutocomplete(nearFinish(11)), false);
   assert.equal(S.canAutocomplete(nearFinish(10)), true);
@@ -75,7 +75,7 @@ test('autocomplete is offered only with 1–10 remaining cells and correct entri
   const g = nearFinish(10), i = g.puzzle.findIndex((n,j) => !n && g.board[j]);
   g.board[i] = g.solution[i] % 9 + 1;
   assert.equal(S.canAutocomplete(g), false);
-  assert.equal(S.autocomplete(g), false);
+  assert.equal(await S.autocomplete(g), false);
 });
 test('autocomplete does not accept an incorrect non-conflicting entry', () => {
   const g = nearFinish(1), i = g.board.indexOf(0);
@@ -88,19 +88,59 @@ test('autocomplete does not accept an incorrect non-conflicting entry', () => {
   assert.ok(g.board.filter(n => !n).length <= 10);
   assert.equal(S.canAutocomplete(g), false);
 });
-test('autocomplete finishes once, clears notes, preserves clues and can be undone', () => {
+test('autocomplete finishes once, clears notes, preserves clues and can be undone', async () => {
   const g = nearFinish(10), i = g.board.indexOf(0);
   g.notes[i] = (1 << 2) | (1 << 7); g.notesMode = true;
   const before = [...g.board], notes = [...g.notes], puzzle = [...g.puzzle];
-  assert.equal(S.autocomplete(g), true);
+  assert.equal(await S.autocomplete(g, { wait: async () => {} }), true);
   assert.deepEqual(g.board, g.solution); assert.deepEqual(g.puzzle, puzzle);
   assert.ok(g.notes.every(n => n === 0)); assert.equal(g.completed, true);
-  assert.equal(g.autoCompleted, true); assert.equal(S.autocomplete(g), false);
+  assert.equal(g.autoCompleted, true); assert.equal(await S.autocomplete(g), false);
   assert.equal(S.canAutocomplete(g), false); assert.equal(S.validSave(JSON.parse(JSON.stringify(g))), true);
-  assert.equal(S.undo(g), true); assert.deepEqual(g.board, before); assert.deepEqual(g.notes, notes);
+  for (let i = 0; i < 10; i++) assert.equal(S.undo(g), true);
+  assert.deepEqual(g.board, before); assert.deepEqual(g.notes, notes);
   assert.equal(g.completed, false); assert.equal(g.autoCompleted, false);
 });
-test('ineligible autocomplete leaves the game unchanged', () => {
+test('ineligible autocomplete leaves the game unchanged', async () => {
   const g = nearFinish(11), before = JSON.stringify(g);
-  assert.equal(S.autocomplete(g), false); assert.equal(JSON.stringify(g), before);
+  assert.equal(await S.autocomplete(g), false); assert.equal(JSON.stringify(g), before);
+});
+test('autocomplete reveals one cell per delay and waits after the final number', async () => {
+  const g = nearFinish(3), waits = [], shown = [];
+  let settled = false;
+  const completion = S.autocomplete(g, {
+    wait: ms => new Promise(resolve => waits.push({ ms, resolve })),
+    onStep: i => shown.push({ i, remaining: g.board.filter(n => !n).length, completed: g.completed })
+  });
+  completion.then(() => { settled = true; });
+  assert.equal(g.board.filter(n => !n).length, 3);
+  for (let step = 0; step < 3; step++) {
+    assert.equal(waits[step].ms, 120);
+    waits[step].resolve(); await Promise.resolve();
+    assert.equal(shown.length, step + 1);
+    assert.equal(shown[step].remaining, 2 - step);
+    assert.equal(shown[step].completed, step === 2);
+    assert.equal(g.selected, shown[step].i);
+    assert.equal(g.board[shown[step].i], g.solution[shown[step].i]);
+    assert.equal(settled, false);
+  }
+  assert.equal(waits[3].ms, 250); assert.equal(settled, false);
+  waits[3].resolve(); assert.equal(await completion, true);
+  assert.equal(shown.length, 3); assert.equal(g.autoCompleted, true);
+});
+test('interrupting autocomplete preserves shown values and cancels pending cells', async () => {
+  const g = nearFinish(3), waits = [];
+  let active = true, shown = 0;
+  const completion = S.autocomplete(g, {
+    wait: () => new Promise(resolve => waits.push(resolve)),
+    isActive: () => active,
+    onStep: () => { shown++; assert.equal(S.validSave(JSON.parse(JSON.stringify(g))), true); }
+  });
+  waits[0](); await Promise.resolve();
+  assert.equal(shown, 1); const saved = JSON.stringify(g);
+  active = false; waits[1]();
+  assert.equal(await completion, false); assert.equal(JSON.stringify(g), saved);
+  assert.equal(g.completed, false); assert.equal(g.board.filter(n => !n).length, 2);
+  assert.equal(await S.autocomplete(g, { wait: async () => {} }), true);
+  assert.equal(g.completed, true);
 });

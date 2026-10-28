@@ -4,6 +4,7 @@
   const S = window.Sudoku, $ = id => document.getElementById(id), SAVE = 'sudoku-simple-v1';
   let game = null, paused = false, foreground = true, selectedLevel = 'medium', lastTick = Date.now(), wasModalPaused = false;
   let storageAvailable = true;
+  let autocompleting = false, autocompleteRun = 0;
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(SAVE));
@@ -44,7 +45,7 @@
     const cell = document.createElement('button');
     cell.className = 'cell'; cell.type = 'button'; cell.dataset.index = i;
     cell.addEventListener('click', () => {
-      if (!game || paused || game.completed) return;
+      if (!game || paused || game.completed || autocompleting) return;
       game.selected = i; render(); save();
     });
     $('board').appendChild(cell); cellElements.push(cell);
@@ -75,7 +76,8 @@
       cell.setAttribute('aria-label', `Fila ${S.row(i) + 1}, columna ${S.col(i) + 1}: ${value || 'vacía'}${game.puzzle[i] ? ', fija' : ''}${noteDigits.length ? ', notas ' + noteDigits.join(', ') : ''}${conflicts.has(i) ? ', en conflicto' : ''}`);
       cell.setAttribute('aria-pressed', String(shade.selected));
     });
-    const locked = paused || game.completed;
+    const locked = paused || game.completed || autocompleting;
+    $('board').inert = paused || autocompleting;
     const offerAutocomplete = !locked && S.canAutocomplete(game);
     $('autocomplete').hidden = !offerAutocomplete;
     $('status').hidden = offerAutocomplete;
@@ -83,7 +85,9 @@
     $('erase').disabled = locked || game.selected < 0 || !!game.puzzle[game.selected] || (!game.board[game.selected] && !game.notes[game.selected]);
     $('notes').disabled = locked;
     $('hint').disabled = locked;
-    $('pause').disabled = game.completed;
+    $('pause').disabled = game.completed || autocompleting;
+    $('new-game').disabled = autocompleting;
+    $('level-button').disabled = autocompleting;
     $('notes').setAttribute('aria-pressed', String(game.notesMode));
     $('notes-badge').textContent = game.notesMode ? 'On' : 'Off';
     for (const key of $('keypad').children) {
@@ -93,6 +97,7 @@
       key.setAttribute('aria-label', `Número ${n}, ${remaining} por colocar`);
     }
     $('status').textContent = !storageAvailable ? 'No se pudo guardar la partida en este dispositivo.' :
+      autocompleting ? 'Completando el tablero…' :
       game.completed ? '¡Tablero completo! Bien jugado.' : paused ? 'Partida en pausa.' :
       conflicts.size ? 'Hay números repetidos. Podés corregirlos o deshacer.' :
       game.notesMode ? 'Modo notas: anotá los números posibles.' :
@@ -103,14 +108,12 @@
     if (!changed) return;
     tick(); save(); render();
     if (game.completed) {
-      $('win-summary').textContent = game.autoCompleted
-        ? `Terminaste el nivel ${S.LEVELS[game.level].label.toLowerCase()} con autocompletar en ${formatTime(game.elapsed)}.`
-        : `Resolviste el nivel ${S.LEVELS[game.level].label.toLowerCase()} en ${formatTime(game.elapsed)}.`;
+      $('win-summary').textContent = `Terminaste el nivel ${S.LEVELS[game.level].label.toLowerCase()} en ${formatTime(game.elapsed)}.`;
       $('win-dialog').showModal();
     }
   }
   function input(n) {
-    if (!game || paused || $('new-dialog').open || $('win-dialog').open) return;
+    if (!game || paused || autocompleting || $('new-dialog').open || $('win-dialog').open) return;
     if (game.selected < 0) { $('status').textContent = 'Primero elegí una casilla del tablero.'; return; }
     afterMove(S.enter(game, n));
   }
@@ -122,6 +125,7 @@
     });
   }
   function openNew() {
+    if (autocompleting) return;
     tick(); wasModalPaused = paused;
     chooseLevel(game ? game.level : 'medium');
     $('dialog-copy').textContent = game && !game.completed ? 'Al empezar, se reemplazará tu partida actual.' : 'Elegí la dificultad y empezá a jugar.';
@@ -147,14 +151,24 @@
   $('erase').addEventListener('click', () => input(0));
   $('notes').addEventListener('click', () => { game.notesMode = !game.notesMode; save(); render(); });
   $('hint').addEventListener('click', () => afterMove(S.hint(game)));
-  $('autocomplete').addEventListener('click', () => {
-    if (!game || paused || $('new-dialog').open || $('win-dialog').open) return;
-    afterMove(S.autocomplete(game));
+  $('autocomplete').addEventListener('click', async () => {
+    if (!game || paused || autocompleting || $('new-dialog').open || $('win-dialog').open || !S.canAutocomplete(game)) return;
+    const target = game, run = ++autocompleteRun;
+    autocompleting = true;
+    render();
+    const finished = await S.autocomplete(target, {
+      isActive: () => run === autocompleteRun && game === target && foreground && !document.hidden && !paused,
+      onStep: () => { tick(); save(); render(); }
+    });
+    if (run !== autocompleteRun || game !== target) return;
+    autocompleting = false;
+    render();
+    if (finished) afterMove(true);
   });
   $('play-again').addEventListener('click', () => { $('win-dialog').close(); openNew(); });
   $('close-win').addEventListener('click', () => $('win-dialog').close());
   document.addEventListener('keydown', e => {
-    if (!game || paused || $('new-dialog').open || $('win-dialog').open || game.completed) return;
+    if (!game || paused || autocompleting || $('new-dialog').open || $('win-dialog').open || game.completed) return;
     if (/^[1-9]$/.test(e.key)) { e.preventDefault(); input(Number(e.key)); }
     else if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); input(0); }
     else if (e.key.toLowerCase() === 'n') { $('notes').click(); }
@@ -166,7 +180,13 @@
       game.selected = nextRow * 9 + nextCol; render(); cellElements[game.selected].focus();
     }
   });
-  function background() { tick(); foreground = false; save(); if (game && !game.completed && !$('new-dialog').open) setPause(true); }
+  function background() {
+    tick(); foreground = false;
+    if (autocompleting) { autocompleteRun++; autocompleting = false; }
+    save();
+    if (game && !game.completed && !$('new-dialog').open) setPause(true);
+    else render();
+  }
   window.nativeVisibility = visible => { if (!visible) background(); else { foreground = true; lastTick = Date.now(); } };
   document.addEventListener('visibilitychange', () => { if (document.hidden) background(); else { foreground = true; lastTick = Date.now(); } });
   window.addEventListener('pagehide', background);

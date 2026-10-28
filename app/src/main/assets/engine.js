@@ -132,14 +132,25 @@
     }
     return remaining > 0 && remaining <= 10;
   }
-  function autocomplete(game) {
+  async function autocomplete(game, {
+    wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
+    onStep = () => {},
+    isActive = () => true
+  } = {}) {
     if (!canAutocomplete(game)) return false;
-    snapshot(game);
-    game.board = [...game.solution];
-    game.notes = Array(81).fill(0);
-    game.completed = true;
-    game.autoCompleted = true;
-    return true;
+    const emptyCells = game.board.flatMap((n, i) => n ? [] : [i]);
+    for (const i of emptyCells) {
+      if (!isActive()) return false;
+      await wait(120);
+      if (!isActive()) return false;
+      game.selected = i;
+      enter(game, game.solution[i], true);
+      if (game.completed) game.autoCompleted = true;
+      onStep(i);
+    }
+    // Let the last number remain visible before showing the completion dialog.
+    await wait(250);
+    return isActive();
   }
   function validSave(g) {
     const digits = a => Array.isArray(a) && a.length === 81 && a.every(n => Number.isInteger(n) && n >= 0 && n <= 9);
