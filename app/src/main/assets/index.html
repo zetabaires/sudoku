@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6fa">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'">
+  <title>Sudoku Simple</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="m9 5-6 6 6 6M3 11h10c5 0 8 3 8 8"/></symbol>
+    <symbol id="i-erase" viewBox="0 0 24 24"><path d="m14 3 7 7-11 11H6l-4-4L14 3ZM8 11l7 7M10 21h11"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 4H4v17h17v-8M14 5l5 5M11 18l-5 1 1-5L18 3a2 2 0 0 1 3 3L11 18Z"/></symbol>
+    <symbol id="i-hint" viewBox="0 0 24 24"><path d="M9 17c0-3-4-4-4-8a7 7 0 0 1 14 0c0 4-4 5-4 8M9 18h6M9 21h6M11 23h2"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 13 8-13 8V4Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  </svg>
+
+  <header class="header">
+    <div class="brand"><span>SUDOKU</span><small>SIMPLE</small></div>
+    <button id="new-game" class="new-button" aria-label="Nueva partida"><svg><use href="#i-plus"/></svg><span>Nueva partida</span></button>
+  </header>
+
+  <main class="game">
+    <div class="game-meta">
+      <button id="level-button" class="level-button" aria-label="Cambiar dificultad"><span id="level-name">Intermedio</span><svg><use href="#i-chevron"/></svg></button>
+      <div class="timer-wrap"><time id="timer">00:00</time><button id="pause" class="icon-button" aria-label="Pausar partida"><svg><use href="#i-pause"/></svg></button></div>
+    </div>
+    <section class="board-wrap" aria-label="Tablero de sudoku">
+      <div id="board" class="board" role="group" aria-label="Sudoku, 9 filas por 9 columnas"></div>
+      <div id="pause-cover" class="pause-cover" hidden><div class="pause-symbol"><svg><use href="#i-pause"/></svg></div><h2>Un pequeño descanso</h2><p>Tu partida te espera.</p><button id="resume" class="primary"><svg><use href="#i-play"/></svg>Continuar</button></div>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite">Elegí una casilla para empezar.</p>
+    <div class="controls" aria-label="Herramientas">
+      <button id="undo" class="tool" disabled><span class="tool-circle"><svg><use href="#i-undo"/></svg></span><span>Deshacer</span></button>
+      <button id="erase" class="tool" disabled><span class="tool-circle"><svg><use href="#i-erase"/></svg></span><span>Borrar</span></button>
+      <button id="notes" class="tool" aria-pressed="false"><span class="tool-circle"><svg><use href="#i-note"/></svg><small id="notes-badge">Off</small></span><span>Notas</span></button>
+      <button id="hint" class="tool"><span class="tool-circle"><svg><use href="#i-hint"/></svg></span><span>Pista</span></button>
+    </div>
+    <div id="keypad" class="keypad" aria-label="Elegir número"></div>
+    <p class="footer">Un número a la vez.</p>
+  </main>
+
+  <dialog id="new-dialog" aria-labelledby="dialog-title">
+    <form method="dialog" class="dialog-body">
+      <div class="eyebrow">UNA NUEVA PARTIDA</div>
+      <h1 id="dialog-title">A tu ritmo.</h1>
+      <p id="dialog-copy">Elegí la dificultad y empezá a jugar.</p>
+      <div class="level-options" role="group" aria-label="Dificultad">
+        <button type="button" data-level="easy"><span>Fácil<small>Para entrar en calor</small></span><span class="level-dots">●<i>●●</i></span></button>
+        <button type="button" data-level="medium" class="chosen"><span>Intermedio<small>Un buen desafío</small></span><span class="level-dots">●●<i>●</i></span></button>
+        <button type="button" data-level="hard"><span>Difícil<small>Para tomártelo con calma</small></span><span class="level-dots">●●●</span></button>
+      </div>
+      <button type="button" id="start" class="primary">Empezar a jugar</button>
+      <button id="cancel-new" class="text-button" value="cancel">Volver a mi partida</button>
+    </form>
+  </dialog>
+
+  <dialog id="win-dialog" aria-labelledby="win-title">
+    <div class="dialog-body win-body"><div class="win-check"><svg><use href="#i-check"/></svg></div><div class="eyebrow">TABLERO COMPLETO</div><h1 id="win-title">¡Bien jugado!</h1><p id="win-summary"></p><button id="play-again" class="primary">Jugar otra partida</button><button id="close-win" class="text-button">Ver mi tablero</button></div>
+  </dialog>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
