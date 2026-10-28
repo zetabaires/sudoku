@@ -35,7 +35,10 @@
       <div id="board" class="board" role="group" aria-label="Sudoku, 9 filas por 9 columnas"></div>
       <div id="pause-cover" class="pause-cover" hidden><div class="pause-symbol"><svg><use href="#i-pause"/></svg></div><h2>Un pequeño descanso</h2><p>Tu partida te espera.</p><button id="resume" class="primary"><svg><use href="#i-play"/></svg>Continuar</button></div>
     </section>
-    <p id="status" class="status" role="status" aria-live="polite">Elegí una casilla para empezar.</p>
+    <div class="board-feedback">
+      <p id="status" class="status" role="status" aria-live="polite">Elegí una casilla para empezar.</p>
+      <button id="autocomplete" class="autocomplete" hidden>Autocompletar</button>
+    </div>
     <div class="controls" aria-label="Herramientas">
       <button id="undo" class="tool" disabled><span class="tool-circle"><svg><use href="#i-undo"/></svg></span><span>Deshacer</span></button>
       <button id="erase" class="tool" disabled><span class="tool-circle"><svg><use href="#i-erase"/></svg></span><span>Borrar</span></button>

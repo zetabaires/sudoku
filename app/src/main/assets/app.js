@@ -11,6 +11,7 @@
       saved.history = []; // Resume the board; undo starts from this session.
       saved.selected = Number.isInteger(saved.selected) && saved.selected >= 0 && saved.selected < 81 ? saved.selected : -1;
       saved.completed = saved.board.every((n, i) => n === saved.solution[i]);
+      saved.autoCompleted = !!saved.autoCompleted && saved.completed;
       saved.notesMode = !!saved.notesMode;
       return saved;
     } catch (_) { return null; }
@@ -75,6 +76,9 @@
       cell.setAttribute('aria-pressed', String(shade.selected));
     });
     const locked = paused || game.completed;
+    const offerAutocomplete = !locked && S.canAutocomplete(game);
+    $('autocomplete').hidden = !offerAutocomplete;
+    $('status').hidden = offerAutocomplete;
     $('undo').disabled = locked || !game.history.length;
     $('erase').disabled = locked || game.selected < 0 || !!game.puzzle[game.selected] || (!game.board[game.selected] && !game.notes[game.selected]);
     $('notes').disabled = locked;
@@ -99,7 +103,9 @@
     if (!changed) return;
     tick(); save(); render();
     if (game.completed) {
-      $('win-summary').textContent = `Resolviste el nivel ${S.LEVELS[game.level].label.toLowerCase()} en ${formatTime(game.elapsed)}.`;
+      $('win-summary').textContent = game.autoCompleted
+        ? `Terminaste el nivel ${S.LEVELS[game.level].label.toLowerCase()} con autocompletar en ${formatTime(game.elapsed)}.`
+        : `Resolviste el nivel ${S.LEVELS[game.level].label.toLowerCase()} en ${formatTime(game.elapsed)}.`;
       $('win-dialog').showModal();
     }
   }
@@ -141,6 +147,10 @@
   $('erase').addEventListener('click', () => input(0));
   $('notes').addEventListener('click', () => { game.notesMode = !game.notesMode; save(); render(); });
   $('hint').addEventListener('click', () => afterMove(S.hint(game)));
+  $('autocomplete').addEventListener('click', () => {
+    if (!game || paused || $('new-dialog').open || $('win-dialog').open) return;
+    afterMove(S.autocomplete(game));
+  });
   $('play-again').addEventListener('click', () => { $('win-dialog').close(); openNew(); });
   $('close-win').addEventListener('click', () => $('win-dialog').close());
   document.addEventListener('keydown', e => {

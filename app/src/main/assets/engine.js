@@ -87,7 +87,7 @@
   function createGame(level = 'medium') {
     const generated = generate(level);
     return { ...generated, board: [...generated.puzzle], notes: Array(81).fill(0), history: [], selected: -1,
-      notesMode: false, elapsed: 0, completed: false };
+      notesMode: false, elapsed: 0, completed: false, autoCompleted: false };
   }
   function snapshot(game) {
     game.history.push({ board: [...game.board], notes: [...game.notes], selected: game.selected });
@@ -112,7 +112,7 @@
   function undo(game) {
     const prev = game.history.pop();
     if (!prev) return false;
-    Object.assign(game, prev, { completed: false }); return true;
+    Object.assign(game, prev, { completed: false, autoCompleted: false }); return true;
   }
   function hint(game) {
     let i = game.selected;
@@ -123,6 +123,24 @@
     game.selected = i;
     return enter(game, game.solution[i], true);
   }
+  function canAutocomplete(game) {
+    if (game.completed) return false;
+    let remaining = 0;
+    for (let i = 0; i < 81; i++) {
+      if (!game.board[i]) remaining++;
+      else if (game.board[i] !== game.solution[i]) return false;
+    }
+    return remaining > 0 && remaining <= 10;
+  }
+  function autocomplete(game) {
+    if (!canAutocomplete(game)) return false;
+    snapshot(game);
+    game.board = [...game.solution];
+    game.notes = Array(81).fill(0);
+    game.completed = true;
+    game.autoCompleted = true;
+    return true;
+  }
   function validSave(g) {
     const digits = a => Array.isArray(a) && a.length === 81 && a.every(n => Number.isInteger(n) && n >= 0 && n <= 9);
     return g && LEVELS[g.level] && digits(g.puzzle) && digits(g.board) && digits(g.solution) &&
@@ -131,7 +149,7 @@
       Array.isArray(g.notes) && g.notes.length === 81 && g.notes.every(n => Number.isInteger(n) && n >= 0 && n <= 1022) &&
       Number.isFinite(g.elapsed) && g.elapsed >= 0;
   }
-  const api = { LEVELS, row, col, box, peers, countSolutions, generate, conflicts, highlights, createGame, enter, undo, hint, validSave };
+  const api = { LEVELS, row, col, box, peers, countSolutions, generate, conflicts, highlights, createGame, enter, undo, hint, canAutocomplete, autocomplete, validSave };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Sudoku = api;
 })(typeof window !== 'undefined' ? window : globalThis);

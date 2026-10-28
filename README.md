@@ -8,6 +8,7 @@ App Android sencilla, en español, inspirada en la referencia visual: fondo clar
 - Tocá una casilla: se sombrean su fila, columna y bloque de 3×3. Las coincidencias del número seleccionado se pintan de azul, con un tono más intenso en la selección.
 - Tocá un número del teclado para colocarlo. Los números originales son fijos.
 - **Deshacer**, **Borrar**, **Notas** y **Pista** son las únicas herramientas. Las pistas son ilimitadas.
+- Cuando quedan **10 casillas vacías o menos** y todos los números colocados son correctos, aparece **Autocompletar** debajo del tablero. Al tocarlo se rellenan las casillas restantes y se termina la partida. Se oculta durante la pausa y si hay algún número incorrecto.
 - Las repeticiones se marcan en rojo; no hay vidas ni penalizaciones.
 - La partida y el tiempo se guardan automáticamente en el dispositivo. Al salir, la partida se pausa; tocá **Continuar** al volver. Deshacer conserva el historial de la sesión actual.
 - **Nueva partida** permite cambiar de nivel; el selector avisa que reemplaza la partida actual.
@@ -53,7 +54,9 @@ Con Node.js instalado:
 node --test tests/engine.test.cjs
 ```
 
-Las nueve pruebas verifican 75 tableros con solución única, sombreado de las 21 casillas relacionadas, coincidencias, protección de pistas originales, notas, deshacer, borrado, pistas, finalización y guardados inválidos.
+Las pruebas verifican 75 tableros con solución única, sombreado de las 21 casillas relacionadas, coincidencias, protección de pistas originales, notas, deshacer, borrado, pistas, finalización, guardados inválidos y las condiciones de autocompletar.
+
+En Android, los márgenes de la barra de estado, la barra de navegación y el recorte de cámara se aplican al contenedor nativo del WebView para que la cabecera quede dentro del área visible.
 
 Para probar la misma interfaz en un navegador, sin Android:
 

@@ -8,6 +8,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import java.io.ByteArrayInputStream;
 
 /** Local-only game. No network permission, SDKs, accounts or external dependencies. */
@@ -48,15 +49,21 @@ public final class MainActivity extends Activity {
                 return !request.getUrl().toString().startsWith(origin);
             }
         });
-        setContentView(web);
-        // Android 15 draws edge to edge: keep the board clear of system bars/cutouts.
+        // WebView does not reliably inset HTML when padding is applied to it directly.
+        // Inset its parent so Android measures the entire WebView inside the safe area.
+        FrameLayout content = new FrameLayout(this);
+        content.setBackgroundColor(Color.WHITE);
+        content.addView(web, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         if (android.os.Build.VERSION.SDK_INT >= 30) {
-            web.setOnApplyWindowInsetsListener((view, insets) -> {
+            content.setOnApplyWindowInsetsListener((view, insets) -> {
                 android.graphics.Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
                 view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                 return WindowInsets.CONSUMED;
             });
         }
+        setContentView(content);
+        content.post(content::requestApplyInsets);
         web.loadUrl("https://appassets.androidplatform.net/index.html");
     }
 

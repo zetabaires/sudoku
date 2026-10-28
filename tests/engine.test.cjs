@@ -59,3 +59,48 @@ test('damaged saves are rejected', () => {
   assert.ok(!S.validSave(null)); const g = S.createGame(); g.board = []; assert.ok(!S.validSave(g));
   const h = S.createGame(); h.solution[0] = 0; assert.ok(!S.validSave(h));
 });
+function nearFinish(remaining) {
+  const g = S.createGame();
+  const editable = g.puzzle.flatMap((n, i) => n ? [] : [i]);
+  g.board = [...g.solution];
+  for (const i of editable.slice(0, remaining)) g.board[i] = 0;
+  return g;
+}
+test('autocomplete is offered only with 1–10 remaining cells and correct entries', () => {
+  assert.equal(S.canAutocomplete(S.createGame()), false);
+  assert.equal(S.canAutocomplete(nearFinish(11)), false);
+  assert.equal(S.canAutocomplete(nearFinish(10)), true);
+  assert.equal(S.canAutocomplete(nearFinish(1)), true);
+  assert.equal(S.canAutocomplete(nearFinish(0)), false);
+  const g = nearFinish(10), i = g.puzzle.findIndex((n,j) => !n && g.board[j]);
+  g.board[i] = g.solution[i] % 9 + 1;
+  assert.equal(S.canAutocomplete(g), false);
+  assert.equal(S.autocomplete(g), false);
+});
+test('autocomplete does not accept an incorrect non-conflicting entry', () => {
+  const g = nearFinish(1), i = g.board.indexOf(0);
+  // Empty the peers of one wrong value to ensure validation checks the solution,
+  // rather than relying only on visible duplicate conflicts.
+  const digit = g.solution[i] % 9 + 1;
+  for (let j = 0; j < 81; j++) if (g.board[j] === digit && S.peers(i,j)) g.board[j] = 0;
+  g.board[i] = digit;
+  assert.equal(S.conflicts(g.board).size, 0);
+  assert.ok(g.board.filter(n => !n).length <= 10);
+  assert.equal(S.canAutocomplete(g), false);
+});
+test('autocomplete finishes once, clears notes, preserves clues and can be undone', () => {
+  const g = nearFinish(10), i = g.board.indexOf(0);
+  g.notes[i] = (1 << 2) | (1 << 7); g.notesMode = true;
+  const before = [...g.board], notes = [...g.notes], puzzle = [...g.puzzle];
+  assert.equal(S.autocomplete(g), true);
+  assert.deepEqual(g.board, g.solution); assert.deepEqual(g.puzzle, puzzle);
+  assert.ok(g.notes.every(n => n === 0)); assert.equal(g.completed, true);
+  assert.equal(g.autoCompleted, true); assert.equal(S.autocomplete(g), false);
+  assert.equal(S.canAutocomplete(g), false); assert.equal(S.validSave(JSON.parse(JSON.stringify(g))), true);
+  assert.equal(S.undo(g), true); assert.deepEqual(g.board, before); assert.deepEqual(g.notes, notes);
+  assert.equal(g.completed, false); assert.equal(g.autoCompleted, false);
+});
+test('ineligible autocomplete leaves the game unchanged', () => {
+  const g = nearFinish(11), before = JSON.stringify(g);
+  assert.equal(S.autocomplete(g), false); assert.equal(JSON.stringify(g), before);
+});
