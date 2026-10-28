@@ -141,7 +141,7 @@
     const emptyCells = game.board.flatMap((n, i) => n ? [] : [i]);
     for (const i of emptyCells) {
       if (!isActive()) return false;
-      await wait(120);
+      await wait(220);
       if (!isActive()) return false;
       game.selected = i;
       enter(game, game.solution[i], true);

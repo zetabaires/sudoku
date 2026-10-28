@@ -115,7 +115,7 @@ test('autocomplete reveals one cell per delay and waits after the final number',
   completion.then(() => { settled = true; });
   assert.equal(g.board.filter(n => !n).length, 3);
   for (let step = 0; step < 3; step++) {
-    assert.equal(waits[step].ms, 120);
+    assert.equal(waits[step].ms, 220);
     waits[step].resolve(); await Promise.resolve();
     assert.equal(shown.length, step + 1);
     assert.equal(shown[step].remaining, 2 - step);
