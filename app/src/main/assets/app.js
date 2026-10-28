@@ -5,6 +5,23 @@
   let game = null, paused = false, foreground = true, selectedLevel = 'medium', lastTick = Date.now(), wasModalPaused = false;
   let storageAvailable = true;
   let autocompleting = false, autocompleteRun = 0;
+  const VIEW_SAVE = 'sudoku-simple-view-v1';
+  function setView(mode, persist = true) {
+    const selected = mode === 'large' ? 'large' : 'classic';
+    document.documentElement.dataset.view = selected;
+    document.querySelectorAll('[data-view-mode]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.viewMode === selected));
+    });
+    if (persist) {
+      try { localStorage.setItem(VIEW_SAVE, selected); } catch (_) { /* Preference is optional. */ }
+    }
+  }
+  let savedView = 'classic';
+  try { savedView = localStorage.getItem(VIEW_SAVE); } catch (_) { /* Use the default view. */ }
+  setView(savedView, false);
+  document.querySelectorAll('[data-view-mode]').forEach(button => {
+    button.addEventListener('click', () => setView(button.dataset.viewMode));
+  });
   function load() {
     try {
       const saved = JSON.parse(localStorage.getItem(SAVE));

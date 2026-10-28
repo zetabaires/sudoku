@@ -12,7 +12,8 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .new-button{border:1px solid #dce5f4;background:#f7f9ff;color:var(--blue);border-radius:24px;padding:10px 13px 10px 10px;display:flex;gap:5px;align-items:center;font-size:13px;font-weight:600;min-height:44px}
 .new-button svg{width:19px;height:19px}
 .game{max-width:524px;margin:auto;padding:22px 12px 0}
-.game-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;min-height:36px;color:var(--muted);font-size:14px;font-weight:600}
+.game-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px;min-height:36px;color:var(--muted);font-size:14px;font-weight:600}
+.view-switch{display:flex;flex-shrink:0;align-items:center;border:1px solid #dce3ef;border-radius:9px;background:#fff;overflow:hidden}.view-switch button{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;background:none;color:var(--muted);font-size:14px;font-weight:400;line-height:1}.view-switch button[data-view-mode=large]{font-size:22px}.view-switch button[aria-pressed=true]{background:#e9efff;color:var(--blue)}.view-switch button:focus-visible{outline-offset:-3px}
 .level-button{display:flex;align-items:center;gap:3px;background:none;border:0;padding:4px 0;min-height:36px;color:var(--muted)}
 .level-button svg{width:20px;height:20px}.timer-wrap{display:flex;align-items:center;gap:2px;font-variant-numeric:tabular-nums}
 .icon-button{width:32px;height:36px;padding:6px 3px;border:0;background:none;color:var(--muted)}.icon-button svg{stroke-width:3.4;width:20px;height:20px}
@@ -24,6 +25,7 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .cell.related{background:var(--shade)}.cell.match{background:var(--match)}.cell.selected{background:var(--selected);box-shadow:inset 0 0 0 2px #4e86db}
 .cell.entered{color:var(--blue)}.cell.conflict{color:#d3374f}.cell.conflict:not(.selected):not(.match){background:#fff0f1}
 .cell .pencil{position:absolute;inset:3px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);font-size:clamp(8px,2.25vw,12px);color:#62738e;line-height:1;align-items:center;text-align:center}
+[data-view=large] .cell{font-size:clamp(26px,9.6vw,50px)}[data-view=large] .cell .pencil{inset:1px;font-size:clamp(9px,2.6vw,14px)}
 .cell .pencil span{display:block}.board-feedback{position:relative;min-height:16px;margin:15px 0 0}.status{font-size:12px;color:var(--muted);text-align:center;min-height:16px;margin:0;line-height:1.4}
 .autocomplete{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border:0;border-radius:20px;background:var(--blue);color:#fff;font-size:14px;line-height:20px;min-height:32px;padding:6px 20px;white-space:nowrap}.autocomplete[hidden]{display:none}.autocomplete:active{background:#002cb1}
 .controls{display:flex;justify-content:space-around;gap:8px;padding:25px 5px 28px}
@@ -34,6 +36,7 @@ svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke
 .keypad{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:3px;width:calc(100% + 8px);margin:0 -4px}
 .number{border:1px solid #d8e1f0;border-radius:7px;background:#fff;min-height:66px;padding:5px 0 6px;color:var(--blue);box-shadow:0 4px 3px #26384e28;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .number .digit{font-size:clamp(26px,8vw,43px);line-height:1.08;font-weight:400}.number .remaining{font-size:12px;font-weight:600;color:var(--muted)}.number.done{opacity:.36}.number:active,.new-button:active{background:#e7efff;transform:translateY(1px)}
+[data-view=large] .number .digit{font-size:clamp(30px,9.6vw,50px)}
 .footer{text-align:center;color:#9ba5b5;font-size:11px;letter-spacing:.3px;margin:28px 0 22px}
 .pause-cover{position:absolute;inset:0;z-index:4;background:#f7f9fc;display:flex;align-items:center;justify-content:center;flex-direction:column;border:1.5px solid #d9e2f1;border-radius:8px}.pause-cover[hidden]{display:none}
 .pause-symbol{width:52px;height:52px;display:grid;place-items:center;border-radius:50%;background:#e9efff;color:var(--blue)}.pause-symbol svg{stroke-width:2.7}

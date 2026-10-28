@@ -29,6 +29,10 @@
   <main class="game">
     <div class="game-meta">
       <button id="level-button" class="level-button" aria-label="Cambiar dificultad"><span id="level-name">Intermedio</span><svg><use href="#i-chevron"/></svg></button>
+      <div class="view-switch" role="group" aria-label="Tamaño de los números">
+        <button type="button" data-view-mode="classic" aria-label="Vista clásica" title="Vista clásica" aria-pressed="true">A</button>
+        <button type="button" data-view-mode="large" aria-label="Números grandes" title="Números grandes" aria-pressed="false">A</button>
+      </div>
       <div class="timer-wrap"><time id="timer">00:00</time><button id="pause" class="icon-button" aria-label="Pausar partida"><svg><use href="#i-pause"/></svg></button></div>
     </div>
     <section class="board-wrap" aria-label="Tablero de sudoku">
